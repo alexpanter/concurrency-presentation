@@ -1,4 +1,4 @@
-\documentclass{beamer}
+\documentclass[xcolor={usenames,dvipsnames}]{beamer}
 
 \usepackage[utf8]{inputenc}
 \usepackage[english]{babel}
@@ -198,15 +198,15 @@ Which of the following are \textit{possible} valid outputs of the program?
 \begin{columns}
 \begin{column}{0.5\textwidth}
 \footnotesize
-\ \ \ \ \textbf{a)} \texttt{Hello 0 1 Bye 2 Bye}\\
-\ \ \ \ \textbf{b)} \texttt{Hello Bye 1 0 2 Bye}\\
-\ \ \ \ \textbf{c)} \texttt{Hello 1 0 Bye 2 Bye}
+\ \ \ \ \textbf{a)} \texttt{Hello 0 1 Bye 2 Bye}\ \ {\color{OliveGreen}Yes}\\
+\ \ \ \ \textbf{b)} \texttt{Hello Bye 1 0 2 Bye}\ \ {\color{red}No}\\
+\ \ \ \ \textbf{c)} \texttt{Hello 1 0 Bye 2 Bye}\ \ {\color{OliveGreen}Yes}
 \end{column}
 \begin{column}{0.5\textwidth}  %%<--- here
 \footnotesize
-\textbf{d)} \texttt{Hello 1 Bye 0 2 Bye}\\
-\textbf{e)} \texttt{Hello 0 Bye 1 2 Bye}\\
-\textbf{f)} \texttt{Hello 0 1 Bye Bye 2}
+\textbf{d)} \texttt{Hello 1 Bye 0 2 Bye}\ \ {\color{OliveGreen}Yes}\\
+\textbf{e)} \texttt{Hello 0 Bye 1 2 Bye}\ \ {\color{red}No}\\
+\textbf{f)} \texttt{Hello 0 1 Bye Bye 2}\ \ {\color{red}No}
 \end{column}
 \end{columns}
 
@@ -371,17 +371,12 @@ We will focus only on concurrency issues with multi-threading.\\\vspace{3mm}
 \section{Concurrency protection mechanisms}
 \frametitle{Concurrency protection mechanisms}
 Fortunately, we have some powerful tools at our disposal to help us
-overcome these issues, provided we use them correctly:
+overcome these issues, provided we use them correctly:\\\vspace{3mm}
 
 \textbf{Mutex}
 \begin{itemize}
-\item Lock critical sections (\footnotesize{Den her by er ik stor nok til os begge to})
+\item Obtain exclusive access to critical sections
 \item \texttt{pthread\_mutex\_(init|destroy|lock|unlock)}
-\end{itemize}
-
-\textbf{Spinlock (extracurricular!)}
-\begin{itemize}
-\item Fancy, locked busy-wait loop.
 \end{itemize}
 
 \textbf{Condition variable}
@@ -402,32 +397,60 @@ overcome these issues, provided we use them correctly:
 
 %
 %
+%
 \begin{frame}
-\frametitle{Summary}
-We have seen the texture coordinate system.
+\frametitle{Processes: Exam question example}
+Exam question from re-exam 18/19, covering recap of several OS areas:
 
-\vspace{5mm}
-We have looked at techniques for filtering, clamping, and wrapping
-of textures.
+\begin{figure}
+\includegraphics[width=1.0\textwidth]{images/exam_question_2_recap.png}
+\end{figure}
 
-\vspace{5mm}
-We have seen how textures can be used to enhance visual effects.
-
-\vspace{5mm}
-Some code examples have shown how textures can be used in OpenGL 3.3.
 \end{frame}
 
 
+
 %
 %
 %
-%% \begin{frame}
-%% \frametitle{References}
-%% \nocite{*}
-%% \bibliography{refs}{}
-%% \bibliographystyle{alpha}
-%% \end{frame}
+\begin{frame}
+\frametitle{Summary}
+We have seen how to construct concurrent work flows.
+
+\vspace{5mm}
+We have seen what can go wrong in concurrent programming, and how to
+fix some common issues.
+
+\vspace{5mm}
+We have looked at some exam questions from previous years.
+
+\vspace{5mm}
+Good luck in your exam.
+\end{frame}
 
 
+
+%
+%
+%
+\begin{frame}
+\frametitle{Inspirational quote}
+
+\begin{figure}
+\includegraphics[width=1.0\textwidth]{images/inspirational-quote.png}
+\end{figure}
+
+\end{frame}
+
+
+
+%
+%
+%
+\begin{frame}
+\frametitle{Questions}
+
+???
+\end{frame}
 
 \end{document}

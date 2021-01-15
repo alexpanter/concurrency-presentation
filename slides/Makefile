@@ -4,7 +4,7 @@ make: clean build
 
 build:
 	@echo "compiling document"
-	@pdflatex ${MAIN}.tex >/dev/null
+	@pdflatex ${MAIN}.tex
 	@echo "creating bibtex"
 	@bibtex ${MAIN}.aux
 	@echo "compiling again"
