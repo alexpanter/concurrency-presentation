@@ -20,7 +20,7 @@
 \title{Recap: Concurrency Control}
 \author{Alexander Christensen}
 \institute{Department of Computer Science \\ University of Copenhagen}
-\date{2019}
+\date{2021}
 
 %% Reference an equation, a figure, or a section
 
@@ -165,7 +165,26 @@ How do we use them?
 %
 %
 \begin{frame}
-\frametitle{Processes}
+\frametitle{How to use Processes}
+
+Linux interface for using processes: \texttt{fork}, \texttt{execv}, \texttt{getpid},
+\texttt{wait}, \texttt{waitpid}, \texttt{exit}.\\\vspace{3mm}
+
+Concurrency protection mechanisms are not necessary between a process and its child
+processes because they operate on completely disjoint memory areas.\\\vspace{3mm}
+
+However, communication between processes is expensive. Common methods are memory
+mappings \texttt{(mmap())}, file pipes \texttt{(pipe())}, and sockets.
+
+\end{frame}
+
+
+
+%
+%
+%
+\begin{frame}
+\frametitle{Processes: Exam question example}
 Exam question from re-exam 19/20:
 
 \vspace{-3mm}
@@ -194,243 +213,193 @@ Which of the following are \textit{possible} valid outputs of the program?
 \end{frame}
 
 
-%% %
-%% %
-%% %
-%% \section{Texture Mapping}
-%% \begin{frame}
-%% Given a triangle with texture coordinates $(u1,v1)$, $(u2,v2)$, and $(u3,v3)$,
-%% we employ a mapping, such that each vertex gets its own texture coordinate.
-%% \frametitle{Texture Mapping}
-%% \begin{figure}
-%% \includegraphics[width=0.9\textwidth]{images/textureMapping.png}
-%% \end{figure}
-%% \end{frame}
-
 
 %
 %
 %
 \begin{frame}
-\frametitle{Texture mapping}
-OpenGL performs texture mapping automatically, based on the chosen filtering
-function, and the \textit{interpolation quilifiers} that we specify in our
-fragment shader:
+\frametitle{I/O Multiplexing}
+\subsection{I/O Multiplexing}
+I/O operations are blocking. In a webserver \texttt{accept()} blocks control flow
+until it receives an incoming connection request.\\\vspace{3mm}
 
-\begin{alltt}\footnotesize
-in vec2 texCoord; // default : perspective-correct interpolation\\
+But with I/O Multiplexing we can add a number of file descriptors to a read set,
+e.g. \texttt{read-set := \{STDIN\_FILENO, listenfd\}}. This way, a webserver can
+read from both without blocking, whenever either is ready for reading.\\\vspace{3mm}
 
-smooth in vec2 texCoord; // the same\\
+Programming interface: \texttt{select}, \texttt{FD\_ZERO}, \texttt{FD\_CLR},
+\texttt{FD\_SET}, \texttt{FD\_ISSET}.\\\vspace{3mm}
 
-noperspective in vec2 texCoord; // smooth, but not perspective-correct\\
+Detail: \texttt{select()} is a blocking function.\\
+Example in (BOH, sec. 12.2).
 
-flat in vec2 texCoord; // no interpolation
-\end{alltt}
 \end{frame}
 
 
+
 %
 %
 %
 \begin{frame}
-\frametitle{Reading an image from disk}
-Assume a 2D texture with four color channels (RGBA) stored as a file
-\texttt{"ourImage.png"}:
+\frametitle{Threading}
+\subsection{Threading}
+Using multiple threads (ie. "multi-threading") is the most common way of achieving
+concurrency in programming.\\
 
-\begin{alltt}\footnotesize
-int width, height;\\
-GLubyte* ourTextureData = someFunctionToReadFromDisk("ourImage.png",\\
-\ensuremath{\qquad}\&width, \&height);\\
+\begin{figure}
+\includegraphics[width=0.8\textwidth]{images/process-with-multiple-threads.png}
+\end{figure}
 
-GLuint ourTexture;\\
-glGenTextures(1, \&ourTexture);\\
-glBindTexture(GL\_TEXTURE\_2D, ourTexture);\\
-glTexImage2D(GL\_TEXTURE\_2D, 0, GL\_RGBA, width, height, 0, GL\_RGBA,\\
-\ensuremath{\qquad}GL\_UNSIGNED\_BYTE, ourTextureData);\\
-
-// remember to cleanup once the image is buffered to the GPU\\
-delete ourTextureData;\\
-\end{alltt}
 \end{frame}
 
 
+
 %
 %
 %
 \begin{frame}
-\frametitle{What is a Texture - Binding the texture}
-To use our texture, it must be bound within the context of an activated
-shader program:
+\frametitle{How to use Threads}
 
-\begin{alltt}\footnotesize
-// activate our shader as the current program in\\
-// OpenGL's state machine\\
-GLuint ourShader = SomeFunctionToCreateAShader();\\
-glUseProgram(ourShader);\\
-\end{alltt}
+Linux (posix) programming interface: \texttt{pthread\_create}, \texttt{pthread\_join},
+\texttt{pthread\_detach}, \texttt{pthread\_cancel}, \texttt{pthread\_exit},
+\texttt{pthread\_self}, \texttt{pthread\_yield}.\\\vspace{3mm}
 
-Now we need to bind the texture to texture unit \#0:
-\begin{alltt}\footnotesize
-glActiveTexture(GL\_TEXTURE0);\\
-glBindTexture(GL\_TEXTURE\_2D, ourTexture);
-\end{alltt}
+Threads are advantageous in many situations because sharing data btw. peer threads
+is very easy \texttt{(malloc())}, and overhead for creating threads is significantly
+less than for creating processes. Also, compared to I/O Multiplexing, threads are
+\textbf{truly} parallel.\\\vspace{3mm}
 
-Maximum number of texture units (simultaneously bound textures) can be queried:
-\begin{alltt}\footnotesize
-int maxTextureUnits = 0;\\
-glGetIntegerv(GL\_MAX\_TEXTURE\_UNITS, \&maxTextureUnits);
-\end{alltt}
+Threaded programs are exposed to a lot of nasty bugs that can be difficult and
+time-consuming to track down.
+
 \end{frame}
 
 
+
 %
 %
 %
 \begin{frame}
-\frametitle{Using the texture in a rendering call}
-When the texture is bound we tell the shader where to find it:
-\begin{alltt}\footnotesize
-GLint location = glGetUniformLocation(ourShader,\\
-\ensuremath{\qquad}"nameInFragmentShader");\\
-glUniform1i(location, 0); // 0 corresponds to the chosen texture unit
-\end{alltt}
+\frametitle{Data sharing in a threaded program}
+Both global and dynamic (malloc'ed) data is shared between threads:
 
-Now the texture is bound within the shader, and we have buffered its
-position on the GPU as well. Now we can use our rendering commands to render
-the texture onto our surface.
+\begin{figure}
+\includegraphics[width=0.9\textwidth]{images/example-program-to-illustrate-sharing.png}
+\end{figure}
 \end{frame}
 
 
-\begin{frame}
-\frametitle{Texture Mapping - Vertex Shader}
-The texture coordinate should be buffered together with the vertex position,
-as a per-vertex attribute:
-\begin{alltt}\footnotesize
-\#version 330 core\\
-
-layout (location = 0) in vec2 vertexPos;\\
-layout (location = 1) in vec2 texCoord;\\
-
-out vec2 interpolatedTexCoord;\\
-
-void main()\\
-\{\\
-\ensuremath{\qquad}gl\_Position = vec4(vertexPos, 0.0f, 1.0f);\\
-\ensuremath{\qquad}interpolatedTexcoord = texCoord; // will be interpolated by OpenGL\\
-\}
-\end{alltt}
-\end{frame}
-
-
-%
-%
-%
-%% \begin{frame}
-%% Any input/output variable between vertex- and fragment shader is
-%% automatically interpolated by OpenGL.
-%% \frametitle{Texture Mapping - Fragment Shader}
-%% \begin{alltt}\footnotesize
-%% \#version 330 core\\
-
-%% uniform sampler2D textureSampler;\\
-%% in vec2 interpolatedTexCoord;\\
-%% out vec4 color;\\
-
-%% void main()\\
-%% \{\\
-%% \ensuremath{\qquad}color = texture(textureSampler, interpolatedTexcoord);\\
-%% \}
-%% \end{alltt}
-%% \end{frame}
-
-
-%% \section{Examples}
-%% %
-%% %
-%% %
-%% \begin{frame}
-%% \frametitle{Example with 1 texture}
-%% Render a two triangles with 1 texture mapped onto them.
-%% \end{frame}
-
 
 %
 %
 %
 \begin{frame}
-\frametitle{Example with 2 textures}
-Render two triangles, but this time buffer two textures and perform various
-smooth transitioning effects between them based on the cursor position
-on the screen.
-\end{frame}
+\section{What can go wrong in concurrent programming}
+\frametitle{What can go wrong in concurrent programming}
+We will focus only on concurrency issues with multi-threading.\\\vspace{3mm}
 
-
-\section{What can go wrong in concurrent programs}
-%
-%
-%
-%% \begin{frame}
-%% \frametitle{The bigger perspective - Framebuffers}
-%% Textures are images loaded to GPU memory.
-
-%% We are not restricted only to reading from textures,
-%% we an also write to them.
-
-%% \begin{figure}
-%% \includegraphics[width=0.8\textwidth]{lecture-slides/concurrent-processes.png}
-%% \end{figure}
-%% If we have $N-1$ textures, and let $N$ represent the application window,
-%% then for $1 \leq i \leq N - 1$ we can use the image data in texture $i$
-%% to run a shader which writes to texture $i+1$. The final image in
-%% texture $N$ is rendered to the screen.
-%% \end{frame}
-
-
-%
-%
-%
-\begin{frame}
-\frametitle{Framebuffer Example: Conway's Game of Life}
-\textbf{Idea:}\\
-Use a framebuffer with 2 textures attached, use one for reading,
-the other for writing.\\\vspace{4mm}
-
-\textbf{Algorithm:}\\
-Bind the framebuffer. Make a drawing call to read from \texttt{read}
-texture and write to \texttt{write} texture. Unbind the framebuffer.
-Make a drawing call again with \texttt{write} texture as uniform.
-Swap \texttt{read} and \texttt{write}.
-\end{frame}
-
-
-%
-%
-%
-\begin{frame}
-\frametitle{The bigger perspective - Inspiration}
-Many common 3D rendering techniques use textures:
-
+\textbf{Common issues}
 \begin{itemize}
-\item normal mapping
-\item bump mapping
-\item parallax mapping
-\item static illumination
-\end{itemize}
+\item Data races / race conditions
+\item Deadlocks
+\end{itemize}\vspace{3mm}
 
-\vspace{4mm}
-Many common 3D rendering techniques rely on framebuffers:
-
+\textbf{Other issues that we omit in this lecture}
 \begin{itemize}
-\item deferred rendering
-\item shadow mapping
-\item screen-space ambient occlusion (SSAO)
-\item fast approximate anti-aliasing (FXAA)
+\item Starvation
+\item Contention / congestion
+\item Busy-wait loops (extensive resource usage)
+\item Priority-inversion
 \end{itemize}
 
 \end{frame}
 
 
+
 %
+%
+%
+\begin{frame}
+\frametitle{Example: What can go wrong (1)}
+\begin{figure}
+\includegraphics[width=0.9\textwidth]{images/what-can-go-wrong-1.png}
+\end{figure}
+\end{frame}
+
+\begin{frame}
+\frametitle{Example: What can go wrong (2)}
+\begin{figure}
+\includegraphics[width=0.9\textwidth]{images/what-can-go-wrong-2.png}
+\end{figure}
+\end{frame}
+
+\begin{frame}
+\frametitle{Example: What can go wrong (3)}
+\begin{figure}
+\includegraphics[width=0.9\textwidth]{images/what-can-go-wrong-3.png}
+\end{figure}
+\end{frame}
+
+\begin{frame}
+\frametitle{Example: What can go wrong (4)}
+\begin{figure}
+\includegraphics[width=0.9\textwidth]{images/what-can-go-wrong-4.png}
+\end{figure}
+\end{frame}
+
+\begin{frame}
+\frametitle{Example: What can go wrong (5)}
+\begin{figure}
+\includegraphics[width=0.9\textwidth]{images/what-can-go-wrong-5.png}
+\end{figure}
+\end{frame}
+
+\begin{frame}
+\frametitle{Example: What can go wrong (6)}
+\begin{figure}
+\includegraphics[width=0.85\textwidth]{images/what-can-go-wrong-6.png}
+\end{figure}
+\end{frame}
+
+
+
+
+%
+%
+%
+\begin{frame}
+\section{Concurrency protection mechanisms}
+\frametitle{Concurrency protection mechanisms}
+Fortunately, we have some powerful tools at our disposal to help us
+overcome these issues, provided we use them correctly:
+
+\textbf{Mutex}
+\begin{itemize}
+\item Lock critical sections (\footnotesize{Den her by er ik stor nok til os begge to})
+\item \texttt{pthread\_mutex\_(init|destroy|lock|unlock)}
+\end{itemize}
+
+\textbf{Spinlock (extracurricular!)}
+\begin{itemize}
+\item Fancy, locked busy-wait loop.
+\end{itemize}
+
+\textbf{Condition variable}
+\begin{itemize}
+\item Threads go to sleep waiting for a specific condition
+\item \texttt{pthread\_cond\_(init|destroy|wait|broadcast)}
+\end{itemize}
+
+\textbf{Semaphore}
+\begin{itemize}
+\item Like mutex, except N threads can lock simultaneously
+\item \texttt{sem\_init}, \texttt{sem\_destroy}, \texttt{sem\_wait}, \texttt{sem\_post}
+\end{itemize}
+
+\end{frame}
+
+
+
 %
 %
 \begin{frame}
